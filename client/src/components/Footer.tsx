@@ -1,6 +1,6 @@
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, Globe } from "lucide-react";
-import { Link } from "wouter";
+import { Link } from "wouter"; 
 
 export function Footer() {
   return (

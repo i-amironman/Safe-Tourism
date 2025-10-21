@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
+
 export default function AuthModal({ onClose, onAuthSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
