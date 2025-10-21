@@ -4,6 +4,7 @@ import SearchBar from '../components/SearchBar';
 import MapView from '../components/MapView';
 import { geocode } from '../lib/geocode';
 
+
 export default function Crime() {
   const [crimeData, setCrimeData] = useState(null);
   const [mapCenter, setMapCenter] = useState([51.505, -0.09]);
