@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import MapView from '../components/MapView';
 import { geocode } from '../lib/geocode';
-
 // Popular Places Data (Top visited global destinations)
 const popularPlaces = [
   {

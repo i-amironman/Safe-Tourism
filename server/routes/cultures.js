@@ -132,7 +132,7 @@ const culturesData = [
       hospitality: 'Atithi Devo Bhava (Guest is God) - Indians are known for warm hospitality and treating visitors like family.',
       dailyLife: 'Strong family ties, community celebrations, religious practices, and increasing modernization while maintaining traditions.'
     }
-  },
+  }, 
   {
     id: 'mediterranean',
     name: 'Mediterranean Culture',
