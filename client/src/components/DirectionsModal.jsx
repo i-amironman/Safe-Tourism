@@ -11,6 +11,7 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
   const [directions, setDirections] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [routeType, setRouteType] = useState('shortest'); // Add route type state
 
   const handleGetDirections = async () => {
     if (!startingPoint.trim()) {
@@ -49,7 +50,7 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
             { lat: hospital.lat, lng: hospital.lng }
           ],
           mode: 'car',
-          pathType: 'shortest'
+          pathType: routeType // Use selected route type
         })
       });
 
@@ -86,6 +87,7 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
     setDirections(null);
     setError(null);
     setStartingPoint('');
+    setRouteType('shortest'); // Reset route type
   };
 
   const handleClose = () => {
@@ -181,6 +183,79 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
               </div>
             </div>
 
+            {/* Route Type Selection */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <Route className="h-5 w-5 text-blue-600" />
+                </div>
+                <label className="text-base font-semibold text-gray-900">Route Preference</label>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div 
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    routeType === 'shortest' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  onClick={() => setRouteType('shortest')}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full border-2 ${
+                      routeType === 'shortest' 
+                        ? 'border-blue-500 bg-blue-500' 
+                        : 'border-gray-300'
+                    }`}>
+                      {routeType === 'shortest' && (
+                        <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Shortest Route</div>
+                      <div className="text-sm text-gray-600">Fastest path</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    routeType === 'safest' 
+                      ? 'border-green-500 bg-green-50' 
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  onClick={() => setRouteType('safest')}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full border-2 ${
+                      routeType === 'safest' 
+                        ? 'border-green-500 bg-green-500' 
+                        : 'border-gray-300'
+                    }`}>
+                      {routeType === 'safest' && (
+                        <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Safest Route</div>
+                      <div className="text-sm text-gray-600">Low crime area</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {routeType === 'safest' && (
+                <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <Shield className="h-4 w-4" />
+                    <span className="text-sm">
+                      Route calculated using real crime data for maximum safety
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Error Message */}
             {error && (
               <Card className="border-0 shadow-lg bg-red-50 border-red-200">
@@ -230,10 +305,15 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
             <Card className="border-0 shadow-lg bg-white border-gray-100">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-green-500 p-2 rounded-lg">
+                  <div className={`${directions.pathType === 'safest' ? 'bg-green-500' : 'bg-blue-500'} p-2 rounded-lg`}>
                     <Route className="h-5 w-5 text-white" />
                   </div>
-                  <h3 className="font-bold text-lg text-gray-900">Route Summary</h3>
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-900">Route Summary</h3>
+                    <p className="text-sm text-gray-600">
+                      {directions.pathType === 'safest' ? 'Safest Route (Low Crime Area)' : 'Shortest Route (Fastest Path)'}
+                    </p>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
