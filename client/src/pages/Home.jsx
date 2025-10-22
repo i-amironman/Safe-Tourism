@@ -169,6 +169,119 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [crimeData, setCrimeData] = useState([]);
 
+  // Generate crime bubbles based on actual crime locations and category counts
+  const generateCrimeBubbles = (byCategory, crimeLocations, centerLat, centerLng) => {
+    if (!byCategory || Object.keys(byCategory).length === 0) return [];
+    if (!crimeLocations || crimeLocations.length === 0) return [];
+
+    const bubbles = [];
+    
+    // Define risk categories based on crime types
+    const lowRiskCategories = ['theft', 'robbery', 'other-crime'];
+    const mediumRiskCategories = ['shoplifting', 'public-order', 'burglary'];
+    const highRiskCategories = ['vehicle-crime', 'criminal-damage-arson', 'anti-social-behaviour', 'possession-of-weapons', 'drugs', 'violent-crime'];
+    
+    // Group crimes by location and category
+    const locationGroups = {};
+    
+    crimeLocations.forEach(crime => {
+      const normalizedCategory = crime.category.toLowerCase().replace(/_/g, '-').replace(/ /g, '-');
+      const key = `${crime.latitude.toFixed(4)},${crime.longitude.toFixed(4)}`; // Group nearby crimes
+      
+      if (!locationGroups[key]) {
+        locationGroups[key] = {
+          lat: crime.latitude,
+          lng: crime.longitude,
+          categories: {},
+          street_name: crime.street_name,
+          location_type: crime.location_type
+        };
+      }
+      
+      locationGroups[key].categories[normalizedCategory] = (locationGroups[key].categories[normalizedCategory] || 0) + 1;
+    });
+
+    // Create bubbles for each location group
+    Object.values(locationGroups).forEach((locationGroup, index) => {
+      const { lat, lng, categories, street_name, location_type } = locationGroup;
+      
+      // Calculate total crimes at this location
+      const totalCrimesAtLocation = Object.values(categories).reduce((sum, count) => sum + count, 0);
+      
+      // Determine dominant risk level at this location
+      let dominantRiskLevel = 'Low Risk';
+      let dominantCategory = '';
+      let maxCount = 0;
+      
+      Object.entries(categories).forEach(([category, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantCategory = category;
+          
+          if (lowRiskCategories.includes(category)) {
+            dominantRiskLevel = 'Low Risk';
+          } else if (mediumRiskCategories.includes(category)) {
+            dominantRiskLevel = 'Medium Risk';
+          } else if (highRiskCategories.includes(category)) {
+            dominantRiskLevel = 'High Risk';
+          } else {
+            dominantRiskLevel = 'Medium Risk'; // Default for unknown categories
+          }
+        }
+      });
+      
+      // Calculate radius based on total crime count at this location
+      let baseRadius = 30; // Smaller base radius for route visualization
+      let radius;
+      
+      if (dominantRiskLevel === 'High Risk') {
+        radius = baseRadius + (totalCrimesAtLocation * 10); // 10m per crime for high risk
+      } else if (dominantRiskLevel === 'Medium Risk') {
+        radius = baseRadius + (totalCrimesAtLocation * 8); // 8m per crime for medium risk
+      } else {
+        radius = baseRadius + (totalCrimesAtLocation * 5); // 5m per crime for low risk
+      }
+      
+      // Cap maximum radius for route visualization
+      radius = Math.min(radius, 150);
+      
+      // Set colors based on risk level
+      let color, fillColor;
+      if (dominantRiskLevel === 'High Risk') {
+        color = '#dc2626';
+        fillColor = '#dc2626';
+      } else if (dominantRiskLevel === 'Medium Risk') {
+        color = '#f97316';
+        fillColor = '#f97316';
+      } else {
+        color = '#eab308';
+        fillColor = '#eab308';
+      }
+
+      // Create category breakdown text
+      const categoryBreakdown = Object.entries(categories)
+        .map(([cat, count]) => `${cat.replace(/-/g, ' ')}: ${count}`)
+        .join(', ');
+
+      bubbles.push({
+        lat: lat,
+        lng: lng,
+        category: dominantCategory.replace(/-/g, ' '),
+        count: totalCrimesAtLocation,
+        categories: categories,
+        street_name: street_name,
+        location_type: location_type,
+        color: color,
+        fillColor: fillColor,
+        radius: radius,
+        riskLevel: dominantRiskLevel,
+        categoryBreakdown: categoryBreakdown
+      });
+    });
+
+    return bubbles;
+  };
+
   const handleSearch = async (query) => {
     if (!query.trim()) return;
     
@@ -277,7 +390,7 @@ export default function Home() {
         // Update loading state for safest route
         const loadingElement = document.querySelector('.route-loading-message');
         if (loadingElement) {
-          loadingElement.textContent = 'Calculating safest route... This may take longer as we analyze crime data along the route.';
+          loadingElement.textContent = 'Calculating safest route... Fetching crime data for safety analysis.';
         }
       }
 
@@ -306,45 +419,66 @@ export default function Home() {
         console.log('Setting markers:', routeMarkers);
         setMarkers(routeMarkers);
 
-        // If safest route, generate crime data visualization
+        // If safest route, fetch real crime data along the route
         if (pathType === 'safest' && data.route.geometry && data.route.geometry.coordinates) {
           const coordinates = data.route.geometry.coordinates;
           
-          // Sample points along the route for crime visualization
-          const sampledPoints = [];
-          const step = Math.max(1, Math.floor(coordinates.length / 6)); // Sample ~6 points
-          
-          for (let i = 0; i < coordinates.length; i += step) {
-            if (sampledPoints.length >= 6) break;
+          try {
+            // Fetch crime data for multiple points along the route
+            const crimeDataPromises = [];
+            const step = Math.max(1, Math.floor(coordinates.length / 8)); // Sample ~8 points
             
-            const [lng, lat] = coordinates[i];
-            
-            // Generate more realistic crime data based on route position
-            let crimeScore;
-            if (i === 0 || i === coordinates.length - 1) {
-              // Start and end points tend to have moderate crime
-              crimeScore = 30 + Math.floor(Math.random() * 40); // 30-70
-            } else if (i < coordinates.length / 3) {
-              // Beginning of route - urban area, higher crime
-              crimeScore = 40 + Math.floor(Math.random() * 50); // 40-90
-            } else if (i < (coordinates.length * 2) / 3) {
-              // Middle of route - suburban area, moderate crime
-              crimeScore = 20 + Math.floor(Math.random() * 40); // 20-60
-            } else {
-              // End of route - variable crime
-              crimeScore = 25 + Math.floor(Math.random() * 45); // 25-70
+            for (let i = 0; i < coordinates.length; i += step) {
+              if (crimeDataPromises.length >= 8) break;
+              
+              const [lng, lat] = coordinates[i];
+              
+              // Fetch crime data for this point
+              const crimePromise = fetch(
+                `http://localhost:5000/crime?lat=${lat}&lng=${lng}`
+              ).then(response => response.json())
+                .then(crimeData => ({
+                  lat: lat,
+                  lng: lng,
+                  crimeData: crimeData,
+                  label: `Area ${crimeDataPromises.length + 1}`
+                }))
+                .catch(error => {
+                  console.warn('Failed to fetch crime data for point:', error);
+                  return null;
+                });
+              
+              crimeDataPromises.push(crimePromise);
             }
             
-            sampledPoints.push({
-              lat: lat,
-              lng: lng,
-              crimeScore: crimeScore,
-              label: `Area ${sampledPoints.length + 1}`
+            const crimeResults = await Promise.all(crimeDataPromises);
+            const validCrimeData = crimeResults.filter(result => result !== null && result.crimeData.success);
+            
+            // Transform crime data for map visualization
+            const mapCrimeData = validCrimeData.map(point => {
+              const { crimeData, lat, lng, label } = point;
+              
+              // Use the same logic as Crime page to generate bubbles
+              const bubbles = generateCrimeBubbles(crimeData.byCategory, crimeData.crimeLocations, lat, lng);
+              
+              return {
+                lat: lat,
+                lng: lng,
+                crimeScore: crimeData.crimeScore,
+                totalCrimes: crimeData.total,
+                bubbles: bubbles,
+                label: label
+              };
             });
+            
+            setCrimeData(mapCrimeData);
+            console.log('Setting real crime data:', mapCrimeData);
+            
+          } catch (error) {
+            console.error('Error fetching crime data:', error);
+            // Fallback to mock data if crime API fails
+            setCrimeData([]);
           }
-          
-          setCrimeData(sampledPoints);
-          console.log('Setting crime data:', sampledPoints);
         } else if (pathType === 'shortest') {
           // For shortest route, show minimal crime data or none
           setCrimeData([]);
@@ -623,7 +757,7 @@ export default function Home() {
                     </select>
                     {pathType === 'safest' && (
                       <p className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-200">
-                        <strong>⚠️ Performance Notice:</strong> Safest route calculation analyzes crime data and may take 20-30 seconds. For faster results, use "Shortest Route".
+                        <strong>🛡️ Safety Analysis:</strong> Safest route fetches real crime data from multiple points along the route for comprehensive safety analysis. This may take 20-30 seconds.
                       </p>
                     )}
                   </div>

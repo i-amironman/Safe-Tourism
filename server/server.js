@@ -12,6 +12,8 @@ const userRouter = require('./routes/user');
 const countriesRouter = require('./routes/countries');
 const culturesRouter = require('./routes/cultures');
 const popularPlacesRouter = require('./routes/popular-places');
+const hotelImagesRouter = require('./routes/hotel-images');
+const hospitalImagesRouter = require('./routes/hospital-images');
 
 const app = express();
 
@@ -54,6 +56,8 @@ app.use('/user', userRouter);
 app.use('/api/countries', countriesRouter);
 app.use('/api/cultures', culturesRouter);
 app.use('/api/popular-places', popularPlacesRouter);
+app.use('/api/hotel-images', hotelImagesRouter);
+app.use('/api/hospital-images', hospitalImagesRouter);
 
 // Test route
 app.get('/api/test', (req, res) => {

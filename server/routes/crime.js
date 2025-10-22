@@ -49,18 +49,56 @@ router.get('/', async (req, res) => {
 
     const crimes = await response.json();
 
-    // Aggregate by category
+    // Aggregate by category and keep individual crime locations
     const byCategory = {};
+    const crimeLocations = [];
+    
     crimes.forEach(crime => {
       const category = crime.category || 'unknown';
       byCategory[category] = (byCategory[category] || 0) + 1;
+      
+      // Add individual crime location data
+      if (crime.location && crime.location.latitude && crime.location.longitude) {
+        crimeLocations.push({
+          category: category,
+          latitude: parseFloat(crime.location.latitude),
+          longitude: parseFloat(crime.location.longitude),
+          location_type: crime.location.type || 'Force',
+          street_name: crime.location.street && crime.location.street.name ? crime.location.street.name : 'Unknown Street'
+        });
+      }
     });
 
-    // Calculate naive crime score (0-100, where 100 is highest risk)
-    // This is a simplified calculation based on crime count
-    // In production, this would use more sophisticated risk models
+    // Calculate tourist-friendly crime score (0-100, where 100 is highest risk)
+    // Uses threshold-based scaling to avoid scaring tourists with historical data
     const total = crimes.length;
-    const crimeScore = Math.min(100, Math.round((total / 50) * 100));
+    let crimeScore;
+    
+    // Threshold-based scaling for tourist-friendly scores
+    const maxThreshold = 5000; // Maximum expected crimes in an area
+    const scalingFactor = 50; // Maximum score we want to show even for high-crime areas
+    
+    if (total <= 50) {
+      // Low crime areas: Linear scaling up to 25/100
+      crimeScore = Math.round((total / 50) * 25);
+    } else if (total <= 200) {
+      // Medium crime areas: Gradual increase from 25-45/100
+      crimeScore = Math.round(25 + ((total - 50) / 150) * 20);
+    } else if (total <= 1000) {
+      // High crime areas: Slower increase from 45-65/100
+      crimeScore = Math.round(45 + ((total - 200) / 800) * 20);
+    } else {
+      // Very high crime areas: Logarithmic scaling to cap at 75/100
+      const excess = total - 1000;
+      const logarithmicIncrease = Math.log10(excess + 1) / Math.log10(maxThreshold - 1000 + 1) * 10;
+      crimeScore = Math.min(75, Math.round(65 + logarithmicIncrease));
+    }
+    
+    // Apply final scaling factor to make it even more tourist-friendly
+    crimeScore = Math.round(crimeScore * (scalingFactor / 100));
+    
+    // Ensure minimum score of 5 for areas with any crime, and maximum of scalingFactor
+    crimeScore = total > 0 ? Math.max(5, Math.min(scalingFactor, crimeScore)) : 0;
 
     // Get the latest crime date
     const lastUpdated = crimes.length > 0
@@ -76,6 +114,7 @@ router.get('/', async (req, res) => {
       message: 'Data covers England, Wales, and Northern Ireland only. Shows crimes from most recent month available.',
       total,
       byCategory,
+      crimeLocations, // Add individual crime locations
       crimeScore,
       lastUpdated: lastUpdated ? lastUpdated.toISOString() : null,
       limitations: [

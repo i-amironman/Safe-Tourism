@@ -21,6 +21,8 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 export default function HospitalCard({ hospital, userLat, userLng }) {
   const [isDirectionsOpen, setIsDirectionsOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState(null);
+  const [imageLoading, setImageLoading] = useState(false);
   
   const distance = userLat && userLng 
     ? haversineDistance(userLat, userLng, hospital.lat, hospital.lng)
@@ -39,48 +41,78 @@ export default function HospitalCard({ hospital, userLat, userLng }) {
 
   const types = getHospitalType(hospital.tags);
 
-  const handleGetDirections = () => {
-    setIsDirectionsOpen(true);
+  // Fetch hospital image using our backend API
+  const fetchHospitalImage = async () => {
+    if (!hospital.name) {
+      setCurrentImageUrl('https://images.unsplash.com/photo-1538108149393-fbbd81895907?ixlib=rb-4.0.3&w=400&h=300&fit=crop&q=80');
+      setImageLoading(false);
+      return;
+    }
+
+    try {
+      setImageLoading(true);
+      const hospitalType = hospital.tags?.amenity || hospital.tags?.healthcare || 'hospital';
+      
+      const response = await fetch(
+        `/api/hospital-images/search?hospitalName=${encodeURIComponent(hospital.name)}&hospitalType=${encodeURIComponent(hospitalType)}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.imageUrl) {
+          setCurrentImageUrl(data.imageUrl);
+          console.log(`Hospital image loaded for ${hospital.name}: ${data.imageUrl}`);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch hospital image:', error);
+    }
+    
+    // Fallback to default image
+    setCurrentImageUrl('https://images.unsplash.com/photo-1538108149393-fbbd81895907?ixlib=rb-4.0.3&w=400&h=300&fit=crop&q=80');
+    setImageLoading(false);
   };
 
   const handleImageLoad = () => {
     setImageLoaded(true);
+    setImageLoading(false);
   };
 
-  // Reset image loaded state when hospital changes
+  const handleImageError = () => {
+    // Use fallback image if current image fails
+    setCurrentImageUrl('https://images.unsplash.com/photo-1538108149393-fbbd81895907?ixlib=rb-4.0.3&w=400&h=300&fit=crop&q=80');
+    setImageLoading(false);
+  };
+
+  // Initialize image loading when component mounts or hospital changes
   useEffect(() => {
     setImageLoaded(false);
-    // Debug: Log the image URL
-    console.log(`Hospital: ${hospital.name}, Image URL: ${hospital.image}`);
-  }, [hospital.id, hospital.name, hospital.image]);
+    setImageLoading(true);
+    setCurrentImageUrl(null);
+    
+    fetchHospitalImage();
+  }, [hospital.id, hospital.name]);
+
+  const handleGetDirections = () => {
+    setIsDirectionsOpen(true);
+  };
 
   return (
     <>
       <div className="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
         {/* Hospital Image */}
         <div className="w-full h-48 relative bg-gray-100">
-          <img 
-            src={hospital.image || `https://source.unsplash.com/400x300/?hospital,medical&sig=${hospital.id || Date.now()}`}
-            alt={`${hospital.name} - Medical Facility`}
-            className="w-full h-full object-cover"
-            onLoad={(e) => {
-              // Image loaded successfully
-              e.target.style.opacity = '1';
-              handleImageLoad();
-            }}
-            onError={(e) => {
-              // First fallback: try a different Unsplash URL with timestamp
-              if (!e.target.dataset.fallbackTried) {
-                e.target.dataset.fallbackTried = 'true';
-                const timestamp = Date.now();
-                e.target.src = `https://source.unsplash.com/400x300/?hospital,medical&sig=${timestamp}`;
-              } else {
-                // Second fallback: use a reliable default image
-                e.target.src = 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-4.0.3&w=400&h=300&fit=crop&q=80';
-              }
-            }}
-            style={{ opacity: '0', transition: 'opacity 0.3s ease' }}
-          />
+          {currentImageUrl && (
+            <img 
+              src={currentImageUrl}
+              alt={`${hospital.name} - Medical Facility`}
+              className="w-full h-full object-cover"
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              style={{ opacity: imageLoaded ? '1' : '0', transition: 'opacity 0.3s ease' }}
+            />
+          )}
           <div className="absolute top-2 right-2">
             {/* Medical Facility Icon */}
             <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
@@ -97,8 +129,8 @@ export default function HospitalCard({ hospital, userLat, userLng }) {
               </svg>
             </div>
           </div>
-          {/* Loading skeleton that shows when image is loading */}
-          {!imageLoaded && (
+          {/* Loading skeleton */}
+          {imageLoading && (
             <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

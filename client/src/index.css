@@ -86,11 +86,33 @@ body {
 /* Crime circle styles */
 .crime-circle {
   transition: all 0.3s ease !important;
+  cursor: pointer !important;
 }
 
 .crime-circle:hover {
   stroke-width: 3px !important;
   filter: brightness(1.1) !important;
+  fill-opacity: 0.3 !important;
+}
+
+/* High risk crime circle animation */
+.crime-circle-high-risk {
+  animation: pulse 2s infinite !important;
+}
+
+@keyframes pulse {
+  0% {
+    stroke-opacity: 1;
+    fill-opacity: 0.2;
+  }
+  50% {
+    stroke-opacity: 0.6;
+    fill-opacity: 0.3;
+  }
+  100% {
+    stroke-opacity: 1;
+    fill-opacity: 0.2;
+  }
 }
 
 /* Crime tooltip styles */

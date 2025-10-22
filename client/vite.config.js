@@ -28,6 +28,8 @@ export default defineConfig({
       '/user': 'http://localhost:3000',
       '/health': 'http://localhost:3000',
       '/api': 'http://localhost:3000',
+      '/api/hotel-images': 'http://localhost:3000',
+      '/api/hospital-images': 'http://localhost:3000',
     }
   }
 });

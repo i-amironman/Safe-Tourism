@@ -232,112 +232,161 @@ export default function MapView({
       crimeLayerRef.current.clearLayers();
 
       if (crimeData && crimeData.length > 0) {
-        crimeData.forEach((crimePoint, index) => {
-          const { lat, lng, crimeScore, label } = crimePoint;
-          
-          if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-            // Determine color based on crime score
-            let color = '#22c55e'; // green for low crime
-            let fillColor = '#22c55e';
-            let radius = 150;
-            let riskLevel = 'Low Risk';
-            
-            if (crimeScore >= 70) {
-              color = '#dc2626'; // red for high crime
-              fillColor = '#dc2626';
-              radius = 250;
-              riskLevel = 'High Risk';
-            } else if (crimeScore >= 40) {
-              color = '#f59e0b'; // amber for medium crime
-              fillColor = '#f59e0b';
-              radius = 200;
-              riskLevel = 'Medium Risk';
+        console.log('Rendering crime data:', crimeData);
+        
+        // Check if this is the new structure (with bubbles) or old structure
+        const hasBubbleStructure = crimeData.some(data => data.bubbles);
+        
+        if (hasBubbleStructure) {
+          // New structure: crimeData contains points with bubbles
+          crimeData.forEach((crimePoint, pointIndex) => {
+            if (crimePoint.bubbles && crimePoint.bubbles.length > 0) {
+              crimePoint.bubbles.forEach((bubble, bubbleIndex) => {
+                renderCrimeBubble(bubble, `Point ${pointIndex + 1} - ${bubbleIndex + 1}`);
+              });
             }
-            
-            // Create circle for crime visualization
-            const circle = L.circle([lat, lng], {
-              color: color,
-              fillColor: fillColor,
-              fillOpacity: 0.15,
-              radius: radius,
-              weight: 2,
-              className: 'crime-circle'
-            });
-            
-            // Add popup with crime information
-            const popupContent = `
-              <div style="
-                text-align: center; 
-                font-family: Arial, sans-serif; 
-                min-width: 150px;
-                padding: 8px;
-              ">
-                <div style="
-                  background-color: ${color};
-                  color: white;
-                  padding: 4px 8px;
-                  border-radius: 4px;
-                  margin-bottom: 8px;
-                  font-weight: bold;
-                  font-size: 12px;
-                ">
-                  ${riskLevel}
-                </div>
-                <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px;">
-                  ${label || `Crime Point ${index + 1}`}
-                </div>
-                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
-                  Crime Score: <strong>${crimeScore || 'N/A'}/100</strong>
-                </div>
-                <div style="
-                  font-size: 10px; 
-                  color: #888;
-                  border-top: 1px solid #eee;
-                  padding-top: 4px;
-                  margin-top: 4px;
-                ">
-                  ${crimeScore >= 70 ? '⚠️ High crime area - exercise caution' : 
-                    crimeScore >= 40 ? '⚡ Moderate crime area - stay alert' : 
-                    '✅ Low crime area - relatively safe'}
-                </div>
-              </div>
-            `;
-            circle.bindPopup(popupContent);
-            
-            // Add tooltip
-            circle.bindTooltip(`${riskLevel}: ${crimeScore}/100`, {
-              permanent: false,
-              direction: 'center',
-              className: 'crime-tooltip'
-            });
-            
-            circle.addTo(crimeLayerRef.current);
-          }
-        });
+          });
+        } else {
+          // Old structure: crimeData contains direct bubble objects
+          crimeData.forEach((crimeBubble, index) => {
+            renderCrimeBubble(crimeBubble, `Area ${index + 1}`);
+          });
+        }
+      } else {
+        console.log('No crime data to visualize');
       }
     }
   }, [crimeData]);
+
+  // Helper function to render individual crime bubbles
+  const renderCrimeBubble = (crimeBubble, identifier) => {
+    const { 
+      lat, 
+      lng, 
+      category, 
+      count, 
+      categories,
+      street_name,
+      location_type,
+      color, 
+      fillColor, 
+      radius, 
+      riskLevel,
+      categoryBreakdown
+    } = crimeBubble;
+    
+    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+      // Determine if this is high risk for styling
+      const isHighRisk = riskLevel === 'High Risk';
+      const isMediumRisk = riskLevel === 'Medium Risk';
+      
+      // Create circle for crime visualization
+      const circle = L.circle([lat, lng], {
+        color: color,
+        fillColor: fillColor,
+        fillOpacity: 0.2,
+        radius: radius,
+        weight: isHighRisk ? 3 : 2, // Thicker border for high risk
+        className: isHighRisk ? 'crime-circle crime-circle-high-risk' : 'crime-circle',
+        dashArray: isHighRisk ? '10, 5' : null, // Dashed border for high risk
+        dashOffset: '0'
+      });
+      
+      // Add popup with detailed crime information
+      const popupContent = `
+        <div style="
+          text-align: center; 
+          font-family: Arial, sans-serif; 
+          min-width: 220px;
+          padding: 12px;
+          border-radius: 6px;
+        ">
+          <div style="
+            background-color: ${color};
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          ">
+            ${riskLevel}
+          </div>
+          <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px;">
+            ${category}
+          </div>
+          <div style="font-size: 18px; font-weight: bold; color: ${color}; margin-bottom: 6px;">
+            ${count} incidents
+          </div>
+          <div style="font-size: 11px; color: #666; margin-bottom: 6px; font-style: italic;">
+            📍 ${street_name}
+          </div>
+          <div style="
+            font-size: 10px; 
+            color: #888;
+            background-color: #f5f5f5;
+            padding: 6px;
+            border-radius: 3px;
+            margin-bottom: 8px;
+            text-align: left;
+          ">
+            <strong>Breakdown:</strong><br>
+            ${categoryBreakdown}
+          </div>
+          <div style="
+            font-size: 10px; 
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 6px;
+            margin-top: 6px;
+            line-height: 1.3;
+          ">
+            ${isHighRisk ? '⚠️ High crime area - exercise extreme caution' : 
+              isMediumRisk ? '⚡ Moderate crime area - stay alert and aware' : 
+              '✅ Low crime area - relatively safe but remain vigilant'}
+          </div>
+        </div>
+      `;
+      circle.bindPopup(popupContent);
+      
+      // Add tooltip with summary
+      circle.bindTooltip(`${street_name}: ${count} incidents`, {
+        permanent: false,
+        direction: 'center',
+        className: 'crime-tooltip',
+        offset: [0, 0]
+      });
+      
+      circle.addTo(crimeLayerRef.current);
+      console.log(`Crime bubble added: ${category} (${riskLevel}) at ${street_name}, ${lat}, ${lng}`);
+    }
+  };
 
   return (
     <div className="w-full rounded-lg overflow-hidden shadow-lg border border-gray-200">
       <div ref={mapRef} style={{ height, width: '100%' }} />
       {(crimeData && crimeData.length > 0) && (
         <div className="text-xs text-gray-600 p-3 bg-blue-50 border-t border-gray-200">
-          <div class="flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div>
-              <strong>Crime Data Visualization:</strong> Circles show crime risk levels along the route
+              <strong>Crime Data Visualization:</strong> Circle size represents crime count at each location
             </div>
-            <div class="flex gap-4">
-              <span class="flex items-center gap-1">
-                <span class="w-3 h-3 bg-green-500 rounded-full"></span> Low Risk
+            <div className="flex gap-4">
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 bg-yellow-500 rounded-full"></span> Low Risk
               </span>
-              <span class="flex items-center gap-1">
-                <span class="w-3 h-3 bg-amber-500 rounded-full"></span> Medium Risk
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 bg-orange-500 rounded-full"></span> Medium Risk
               </span>
-              <span class="flex items-center gap-1">
-                <span class="w-3 h-3 bg-red-500 rounded-full"></span> High Risk
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 bg-red-500 rounded-full"></span> High Risk
               </span>
             </div>
+          </div>
+          <div className="mt-2 text-xs text-gray-500">
+            Click on any circle to see detailed crime location information and category breakdown
           </div>
         </div>
       )}

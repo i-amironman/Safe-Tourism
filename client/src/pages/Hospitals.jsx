@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import SearchBar from '../components/SearchBar';
 import HospitalCard from '../components/HospitalCard';
+import Pagination from '../components/ui/pagination';
 import { geocode } from '../lib/geocode';
 
 // 20 hospital types for filtering
@@ -28,6 +29,8 @@ const HOSPITAL_TYPES = [
   { value: 'dialysis', label: 'Dialysis Center' },
 ];
 
+const ITEMS_PER_PAGE = 18;
+
 export default function Hospitals() {
   const [hospitals, setHospitals] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
@@ -35,11 +38,13 @@ export default function Hospitals() {
   const [error, setError] = useState(null);
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleSearch = async (query) => {
     setIsLoading(true);
     setError(null);
     setHospitals([]);
+    setCurrentPage(1);
 
     try {
       // First, geocode the location
@@ -85,10 +90,12 @@ export default function Hospitals() {
         return [...prev, filterValue];
       }
     });
+    setCurrentPage(1);
   };
 
   const clearFilters = () => {
     setSelectedFilters([]);
+    setCurrentPage(1);
   };
 
   // Filter hospitals based on selected types
@@ -104,6 +111,16 @@ export default function Hospitals() {
         );
       })
     : hospitals;
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredHospitals.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentHospitals = filteredHospitals.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -193,13 +210,18 @@ export default function Hospitals() {
                 Found <span className="font-semibold">{filteredHospitals.length}</span> hospital
                 {filteredHospitals.length !== 1 ? 's' : ''} near{' '}
                 <span className="font-semibold">{userLocation?.display_name}</span>
+                {totalPages > 1 && (
+                  <span className="text-sm text-gray-500 ml-2">
+                    (Page {currentPage} of {totalPages})
+                  </span>
+                )}
               </p>
             </div>
 
             {/* Hospital Cards Grid */}
-            {filteredHospitals.length > 0 ? (
+            {currentHospitals.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredHospitals.map(hospital => (
+                {currentHospitals.map(hospital => (
                   <HospitalCard
                     key={hospital.id}
                     hospital={hospital}
@@ -217,6 +239,19 @@ export default function Hospitals() {
                 >
                   Clear filters
                 </button>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  totalItems={filteredHospitals.length}
+                />
               </div>
             )}
           </div>
