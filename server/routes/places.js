@@ -112,6 +112,7 @@ async function getHospitalImage(hospital) {
     const foursquareImage = await getFoursquarePhoto(name, lat, lng);
     if (foursquareImage) {
       imageUrl = foursquareImage;
+      console.log(`Using Foursquare image for: ${name}`);
     }
   } catch (error) {
     console.log('Foursquare API failed, trying next source:', error.message);
@@ -123,6 +124,7 @@ async function getHospitalImage(hospital) {
       const wikimediaImage = await getWikimediaImage(name, healthcareType);
       if (wikimediaImage) {
         imageUrl = wikimediaImage;
+        console.log(`Using Wikimedia image for: ${name}`);
       }
     } catch (error) {
       console.log('Wikimedia API failed, trying next source:', error.message);
@@ -135,6 +137,7 @@ async function getHospitalImage(hospital) {
       const flickrImage = await getFlickrImage(name, healthcareType);
       if (flickrImage) {
         imageUrl = flickrImage;
+        console.log(`Using Flickr image for: ${name}`);
       }
     } catch (error) {
       console.log('Flickr API failed, using fallback:', error.message);
@@ -144,6 +147,7 @@ async function getHospitalImage(hospital) {
   // Fallback to Unsplash with enhanced logic
   if (!imageUrl) {
     imageUrl = getUnsplashImage(hospital);
+    console.log(`Using Unsplash image for: ${name} -> ${imageUrl.substring(0, 50)}...`);
   }
   
   // Cache the result (cache for 1 hour)
@@ -282,57 +286,61 @@ function getUnsplashImage(hospital) {
   // Generate unique seed based on hospital name and type for consistent unique images
   const uniqueSeed = generateUniqueImageSeed(hospital);
   
+  // Create a more reliable Unsplash URL with multiple keywords
+  const baseKeywords = 'hospital,medical,healthcare';
+  const timestamp = Date.now(); // Add timestamp to prevent caching issues
+  
   // Specialized hospitals based on name
   if (name.includes('medical center') || name.includes('medical centre')) {
-    return `https://source.unsplash.com/400x300/?medical-center,${uniqueSeed}`;
+    return `https://source.unsplash.com/400x300/?${baseKeywords},medical-center,${uniqueSeed}&t=${timestamp}`;
   }
   if (name.includes('children') || name.includes('pediatric')) {
-    return `https://source.unsplash.com/400x300/?pediatric-hospital,${uniqueSeed}`;
+    return `https://source.unsplash.com/400x300/?${baseKeywords},pediatric-hospital,${uniqueSeed}&t=${timestamp}`;
   }
   if (name.includes('heart') || name.includes('cardiac') || name.includes('cardio')) {
-    return `https://source.unsplash.com/400x300/?cardiac-hospital,${uniqueSeed}`;
+    return `https://source.unsplash.com/400x300/?${baseKeywords},cardiac-hospital,${uniqueSeed}&t=${timestamp}`;
   }
   if (name.includes('cancer') || name.includes('oncology')) {
-    return `https://source.unsplash.com/400x300/?cancer-hospital,${uniqueSeed}`;
+    return `https://source.unsplash.com/400x300/?${baseKeywords},cancer-hospital,${uniqueSeed}&t=${timestamp}`;
   }
   if (name.includes('eye') || name.includes('ophthalm')) {
-    return `https://source.unsplash.com/400x300/?eye-hospital,${uniqueSeed}`;
+    return `https://source.unsplash.com/400x300/?${baseKeywords},eye-hospital,${uniqueSeed}&t=${timestamp}`;
   }
   if (name.includes('bone') || name.includes('orthoped')) {
-    return `https://source.unsplash.com/400x300/?orthopedic-hospital,${uniqueSeed}`;
+    return `https://source.unsplash.com/400x300/?${baseKeywords},orthopedic-hospital,${uniqueSeed}&t=${timestamp}`;
   }
   if (name.includes('mental') || name.includes('psychiatric')) {
-    return `https://source.unsplash.com/400x300/?mental-health-facility,${uniqueSeed}`;
+    return `https://source.unsplash.com/400x300/?${baseKeywords},mental-health-facility,${uniqueSeed}&t=${timestamp}`;
   }
   if (name.includes('emergency') || name.includes('er')) {
-    return `https://source.unsplash.com/400x300/?emergency-room,${uniqueSeed}`;
+    return `https://source.unsplash.com/400x300/?${baseKeywords},emergency-room,${uniqueSeed}&t=${timestamp}`;
   }
   
   // Based on healthcare type with unique variations
   switch (healthcareType) {
     case 'hospital':
-      return `https://source.unsplash.com/400x300/?hospital-building,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},hospital-building,${uniqueSeed}&t=${timestamp}`;
     case 'clinic':
-      return `https://source.unsplash.com/400x300/?medical-clinic,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},medical-clinic,${uniqueSeed}&t=${timestamp}`;
     case 'doctors':
-      return `https://source.unsplash.com/400x300/?doctors-office,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},doctors-office,${uniqueSeed}&t=${timestamp}`;
     case 'dentist':
-      return `https://source.unsplash.com/400x300/?dental-clinic,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},dental-clinic,${uniqueSeed}&t=${timestamp}`;
     case 'pharmacy':
-      return `https://source.unsplash.com/400x300/?pharmacy-store,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},pharmacy-store,${uniqueSeed}&t=${timestamp}`;
     case 'laboratory':
-      return `https://source.unsplash.com/400x300/?medical-laboratory,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},medical-laboratory,${uniqueSeed}&t=${timestamp}`;
     case 'physiotherapist':
-      return `https://source.unsplash.com/400x300/?physiotherapy-clinic,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},physiotherapy-clinic,${uniqueSeed}&t=${timestamp}`;
     case 'alternative':
-      return `https://source.unsplash.com/400x300/?alternative-medicine,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},alternative-medicine,${uniqueSeed}&t=${timestamp}`;
     case 'blood_bank':
-      return `https://source.unsplash.com/400x300/?blood-donation-center,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},blood-donation-center,${uniqueSeed}&t=${timestamp}`;
     case 'vaccination_centre':
-      return `https://source.unsplash.com/400x300/?vaccination-center,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},vaccination-center,${uniqueSeed}&t=${timestamp}`;
     default:
       // Default hospital images with unique seed for variety
-      return `https://source.unsplash.com/400x300/?hospital,${uniqueSeed}`;
+      return `https://source.unsplash.com/400x300/?${baseKeywords},${uniqueSeed}&t=${timestamp}`;
   }
 }
 
@@ -345,7 +353,11 @@ function generateUniqueImageSeed(hospital) {
   
   // Create a unique hash from hospital details
   const combinedString = `${name}-${type}-${lat}-${lng}`;
-  return btoa(combinedString).substring(0, 8).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const hash = btoa(combinedString).substring(0, 8).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  
+  // Add some randomness for variety while maintaining consistency
+  const randomSuffix = Math.abs(hash.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 1000;
+  return `${hash}${randomSuffix}`;
 }
 
 
@@ -378,7 +390,7 @@ function isMedicalImage(imageUrl, title) {
   return medicalKeywords.some(keyword => titleLower.includes(keyword));
 }
 
-// Normalize Overpass API response with async image fetching
+// Normalize Overpass API response with async image fetching and unique image prioritization
 async function normalizeOverpassData(elements) {
   const hospitals = elements.map(element => {
     // Get coordinates (handle both nodes and ways)
@@ -399,20 +411,81 @@ async function normalizeOverpassData(elements) {
     };
   }).filter(item => item !== null); // Remove null entries
   
-  // Fetch images for all hospitals in parallel
+  // Fetch images for all hospitals in parallel with better error handling
   const hospitalsWithImages = await Promise.all(
     hospitals.map(async (hospital) => {
       try {
-        hospital.image = await getHospitalImage(hospital);
+        const imageUrl = await getHospitalImage(hospital);
+        // Ensure we always have a valid image URL
+        hospital.image = imageUrl || 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-4.0.3&w=400&h=300&fit=crop&q=80';
+        console.log(`✓ Image assigned to ${hospital.name}: ${hospital.image.substring(0, 50)}...`);
       } catch (error) {
-        console.error('Failed to fetch image for hospital:', hospital.name, error);
+        console.error(`✗ Failed to fetch image for hospital: ${hospital.name}`, error.message);
+        // Always provide a fallback image
         hospital.image = 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-4.0.3&w=400&h=300&fit=crop&q=80';
       }
       return hospital;
     })
   );
   
+  // Sort hospitals by image uniqueness - unique images first, then similar/duplicate images
+  hospitalsWithImages.sort((a, b) => {
+    const signatureA = getImageSignature(a.image);
+    const signatureB = getImageSignature(b.image);
+    
+    // Count how many hospitals have the same image signature
+    const countSimilar = (signature, hospitals) => {
+      return hospitals.filter(h => getImageSignature(h.image) === signature).length;
+    };
+    
+    const countA = countSimilar(signatureA, hospitalsWithImages);
+    const countB = countSimilar(signatureB, hospitalsWithImages);
+    
+    // Hospitals with unique images (count = 1) come first
+    if (countA === 1 && countB > 1) return -1;
+    if (countB === 1 && countA > 1) return 1;
+    
+    // If both have same uniqueness level, sort by name
+    if (countA === countB) {
+      return a.name.localeCompare(b.name);
+    }
+    
+    // More unique images come first (lower count = higher priority)
+    return countA - countB;
+  });
+  
+  // Log the uniqueness results
+  const imageGroups = {};
+  hospitalsWithImages.forEach(hospital => {
+    const signature = getImageSignature(hospital.image);
+    if (!imageGroups[signature]) {
+      imageGroups[signature] = [];
+    }
+    imageGroups[signature].push(hospital.name);
+  });
+  
+  const uniqueImages = Object.values(imageGroups).filter(group => group.length === 1).length;
+  const duplicateGroups = Object.values(imageGroups).filter(group => group.length > 1);
+  const totalDuplicates = duplicateGroups.reduce((sum, group) => sum + group.length, 0);
+  
+  console.log(`🖼️ Image Uniqueness Analysis:`);
+  console.log(`   🎯 Unique images: ${uniqueImages} hospitals`);
+  console.log(`   🔄 Similar/duplicate images: ${totalDuplicates} hospitals in ${duplicateGroups.length} groups`);
+  console.log(`📈 Sorted results: Unique images appear first!`);
+  
+  console.log(`Processed ${hospitalsWithImages.length} hospitals with uniqueness prioritization`);
   return hospitalsWithImages;
+}
+
+// Helper function to extract image signature (moved outside for reuse)
+function getImageSignature(imageUrl) {
+  // For Unsplash images, extract the seed/signature part from query parameters
+  if (imageUrl.includes('source.unsplash.com')) {
+    const match = imageUrl.match(/,([^&?]+)(?:&t=|\?|$)/);
+    return match ? match[1] : imageUrl;
+  }
+  // For other images, use the full URL as signature
+  return imageUrl;
 }
 
 router.get('/', async (req, res) => {
