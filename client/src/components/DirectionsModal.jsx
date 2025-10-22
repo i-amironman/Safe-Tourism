@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
-import { Navigation, MapPin, Clock, AlertCircle } from 'lucide-react';
+import { Navigation, MapPin, Clock, AlertCircle, Route, Shield, Navigation2 } from 'lucide-react';
 import DirectionsMap from './DirectionsMap';
 
 export default function DirectionsModal({ isOpen, onClose, hospital, userLocation }) {
@@ -95,93 +95,128 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Navigation className="h-5 w-5" />
-            Get Directions to {hospital.name}
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white border-0 shadow-2xl">
+        {/* Header with gradient background */}
+        <DialogHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white -m-6 mb-0 p-6 rounded-t-xl">
+          <DialogTitle className="flex items-center gap-3 text-xl">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+              <Navigation2 className="h-6 w-6" />
+            </div>
+            <div>
+              <div>Get Directions</div>
+              <div className="text-sm font-normal text-blue-100 mt-1">to {hospital.name}</div>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
         {!directions ? (
-          <div className="space-y-4">
-            {/* Hospital Info */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-red-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold">{hospital.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      {hospital.tags?.['addr:street'] && `${hospital.tags['addr:street']}, `}
-                      {hospital.tags?.['addr:city'] || 'Location not specified'}
-                    </p>
-                    {hospital.tags?.phone && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        📞 {hospital.tags.phone}
+          <div className="space-y-6 p-6">
+            {/* Hospital Info Card */}
+            <Card className="border-0 shadow-lg bg-white border-gray-100">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
+                    <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg text-gray-900 mb-2">{hospital.name}</h3>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600 flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        {hospital.tags?.['addr:street'] && `${hospital.tags['addr:street']}, `}
+                        {hospital.tags?.['addr:city'] || 'Location not specified'}
                       </p>
-                    )}
+                      {hospital.tags?.phone && (
+                        <p className="text-sm text-gray-600 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                          {hospital.tags.phone}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Starting Point Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Starting Point</label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter address, landmark, or coordinates"
-                  value={startingPoint}
-                  onChange={(e) => setStartingPoint(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleGetDirections()}
-                  className="flex-1"
-                />
-                <Button
-                  variant="outline"
-                  onClick={handleUseCurrentLocation}
-                  disabled={!userLocation}
-                  title="Use current location"
-                >
-                  <MapPin className="h-4 w-4" />
-                </Button>
+            {/* Starting Point Input Section */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <Route className="h-5 w-5 text-blue-600" />
+                </div>
+                <label className="text-base font-semibold text-gray-900">Where are you starting from?</label>
               </div>
-              {userLocation && (
-                <p className="text-xs text-gray-500">
-                  Or use your current location: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
-                </p>
-              )}
+              
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <div className="flex-1 relative">
+                    <Input
+                      placeholder="Enter address, landmark, or coordinates"
+                      value={startingPoint}
+                      onChange={(e) => setStartingPoint(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleGetDirections()}
+                      className="pl-10 h-12 border-gray-200 bg-white focus:border-blue-500 focus:ring-blue-500/20"
+                    />
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handleUseCurrentLocation}
+                    disabled={!userLocation}
+                    title="Use current location"
+                    className="h-12 px-4 bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all"
+                  >
+                    <MapPin className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {userLocation && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-blue-50 p-3 rounded-lg">
+                    <Shield className="h-4 w-4 text-blue-500" />
+                    <span>Your current location is available: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Error Message */}
             {error && (
-              <Card className="border-red-200 bg-red-50">
+              <Card className="border-0 shadow-lg bg-red-50 border-red-200">
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-2 text-red-700">
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="text-sm">{error}</span>
+                  <div className="flex items-center gap-3 text-red-700">
+                    <div className="bg-red-100 p-2 rounded-lg">
+                      <AlertCircle className="h-5 w-5" />
+                    </div>
+                    <span className="text-sm font-medium">{error}</span>
                   </div>
                 </CardContent>
               </Card>
             )}
 
             {/* Action Buttons */}
-            <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>
+            <DialogFooter className="flex gap-3 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={handleClose}
+                className="h-12 px-6 bg-white border-gray-200 hover:bg-gray-50 transition-all"
+              >
                 Cancel
               </Button>
               <Button 
                 onClick={handleGetDirections} 
                 disabled={loading || !startingPoint.trim()}
+                className="h-12 px-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium shadow-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                     Getting Directions...
                   </>
                 ) : (
                   <>
-                    <Navigation className="h-4 w-4 mr-2" />
+                    <Navigation className="h-5 w-5 mr-2" />
                     Get Directions
                   </>
                 )}
@@ -190,74 +225,96 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
           </div>
         ) : (
           /* Directions Results with Map */
-          <div className="space-y-4">
-            {/* Route Summary */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">From</p>
-                    <p className="font-medium text-sm">{directions.startAddress}</p>
+          <div className="space-y-6 p-6">
+            {/* Route Summary Card */}
+            <Card className="border-0 shadow-lg bg-white border-gray-100">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-green-500 p-2 rounded-lg">
+                    <Route className="h-5 w-5 text-white" />
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">To</p>
-                    <p className="font-medium text-sm">{directions.endAddress}</p>
+                  <h3 className="font-bold text-lg text-gray-900">Route Summary</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">From</p>
+                    <p className="font-medium text-sm text-gray-900">{directions.startAddress}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">To</p>
+                    <p className="font-medium text-sm text-gray-900">{directions.endAddress}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 mt-4 pt-4 border-t">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-500" />
-                    <span className="font-medium">{directions.durationMin} min</span>
+                
+                <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Duration</p>
+                      <p className="font-bold text-blue-600">{directions.durationMin} min</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">{directions.distanceKm} km</span>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-green-100 p-2 rounded-lg">
+                      <MapPin className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Distance</p>
+                      <p className="font-bold text-green-600">{directions.distanceKm} km</p>
+                    </div>
                   </div>
+                  {directions.riskScore && (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-purple-100 p-2 rounded-lg">
+                        <Shield className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Safety Score</p>
+                        <p className="font-bold text-purple-600">{100 - directions.riskScore}/100</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Interactive Map */}
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-medium mb-3">Route Map</h3>
-                <DirectionsMap
-                  startCoords={directions.startCoords}
-                  endCoords={directions.endCoords}
-                  routeGeometry={directions.geometry}
-                  hospitalName={hospital.name}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Route Information */}
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-900">
-                      🗺️ Interactive Route Display
-                    </p>
-                    <p className="text-xs text-blue-700">
-                      Map shows the complete route from start to {hospital.name}
-                    </p>
-                    {directions.riskScore && (
-                      <p className="text-xs text-blue-700 mt-1">
-                        🛡️ Route safety score: {100 - directions.riskScore}/100
-                      </p>
-                    )}
+            <Card className="border-0 shadow-lg bg-white border-gray-100">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-blue-500 p-2 rounded-lg">
+                    <Navigation2 className="h-5 w-5 text-white" />
                   </div>
+                  <h3 className="font-bold text-lg text-gray-900">Interactive Route Map</h3>
+                </div>
+                <div className="rounded-xl overflow-hidden border-2 border-gray-100">
+                  <DirectionsMap
+                    startCoords={directions.startCoords}
+                    endCoords={directions.endCoords}
+                    routeGeometry={directions.geometry}
+                    hospitalName={hospital.name}
+                  />
                 </div>
               </CardContent>
             </Card>
 
             {/* Action Buttons */}
-            <DialogFooter>
-              <Button variant="outline" onClick={resetDirections}>
+            <DialogFooter className="flex gap-3 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={resetDirections}
+                className="h-12 px-6 bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all"
+              >
                 <Navigation className="h-4 w-4 mr-2" />
                 New Route
               </Button>
-              <Button onClick={handleClose}>
+              <Button 
+                onClick={handleClose}
+                className="h-12 px-8 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium shadow-lg transition-all transform hover:scale-[1.02]"
+              >
                 Done
               </Button>
             </DialogFooter>
