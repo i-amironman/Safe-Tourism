@@ -4,7 +4,6 @@ import SearchBar from '../components/SearchBar';
 import HotelCard from '../components/HotelCard';
 import { geocode } from '../lib/geocode';
 
-
 // Hotel amenity types for filtering
 const HOTEL_AMENITIES = [
   { value: 'hotel', label: 'Hotel' },

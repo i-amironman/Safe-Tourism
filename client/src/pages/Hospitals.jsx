@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import SearchBar from '../components/SearchBar';
 import HospitalCard from '../components/HospitalCard';
-import { geocode } from '../lib/geocode';  
-  
+import { geocode } from '../lib/geocode';
+
 // 20 hospital types for filtering
 const HOSPITAL_TYPES = [
   { value: 'hospital', label: 'Hospital' },
