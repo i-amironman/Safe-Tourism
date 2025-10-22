@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
 import { Navigation, MapPin, Clock, AlertCircle } from 'lucide-react';
+import DirectionsMap from './DirectionsMap';
 
 export default function DirectionsModal({ isOpen, onClose, hospital, userLocation }) {
   const [startingPoint, setStartingPoint] = useState('');
@@ -60,6 +61,8 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
 
       setDirections({
         ...routeData.route,
+        startCoords: startCoords,
+        endCoords: { lat: hospital.lat, lng: hospital.lng },
         startAddress: geocodeData[0].display_name,
         endAddress: hospital.name
       });
@@ -92,7 +95,7 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Navigation className="h-5 w-5" />
@@ -186,7 +189,7 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
             </DialogFooter>
           </div>
         ) : (
-          /* Directions Results */
+          /* Directions Results with Map */
           <div className="space-y-4">
             {/* Route Summary */}
             <Card>
@@ -214,73 +217,36 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
               </CardContent>
             </Card>
 
-            {/* Map Preview */}
+            {/* Interactive Map */}
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-medium mb-3">Route Map</h3>
-                <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center relative overflow-hidden">
-                  {/* Simple map visualization */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50">
-                    <div className="relative h-full">
-                      {/* Start point */}
-                      <div className="absolute top-4 left-4">
-                        <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                          Start
-                        </div>
-                      </div>
-                      
-                      {/* End point */}
-                      <div className="absolute bottom-4 right-4">
-                        <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          {hospital.name}
-                        </div>
-                      </div>
-                      
-                      {/* Route line visualization */}
-                      <svg className="absolute inset-0 w-full h-full">
-                        <path
-                          d="M 40 40 Q 150 80, 280 200"
-                          stroke="#3B82F6"
-                          strokeWidth="3"
-                          fill="none"
-                          strokeDasharray="5,5"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="relative z-10 text-center">
-                    <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">Interactive map preview</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Route calculated via OpenStreetMap
-                    </p>
-                  </div>
-                </div>
+                <DirectionsMap
+                  startCoords={directions.startCoords}
+                  endCoords={directions.endCoords}
+                  routeGeometry={directions.geometry}
+                  hospitalName={hospital.name}
+                />
               </CardContent>
             </Card>
 
-            {/* External Map Link */}
+            {/* Route Information */}
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-blue-900">
-                      Need turn-by-turn navigation?
+                      🗺️ Interactive Route Display
                     </p>
                     <p className="text-xs text-blue-700">
-                      Open in your preferred map app
+                      Map shows the complete route from start to {hospital.name}
                     </p>
+                    {directions.riskScore && (
+                      <p className="text-xs text-blue-700 mt-1">
+                        🛡️ Route safety score: {100 - directions.riskScore}/100
+                      </p>
+                    )}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const url = `https://www.openstreetmap.org/directions?engine=osrm_car&route=${startingPoint};${hospital.lat},${hospital.lng}`;
-                      window.open(url, '_blank');
-                    }}
-                  >
-                    Open in Maps
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -288,6 +254,7 @@ export default function DirectionsModal({ isOpen, onClose, hospital, userLocatio
             {/* Action Buttons */}
             <DialogFooter>
               <Button variant="outline" onClick={resetDirections}>
+                <Navigation className="h-4 w-4 mr-2" />
                 New Route
               </Button>
               <Button onClick={handleClose}>
